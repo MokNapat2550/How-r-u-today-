@@ -1,0 +1,36 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  body {
+    /* ตั้งค่าฟอนต์เริ่มต้นของทั้งเว็บ */
+    font-family: 'Inter', sans-serif;
+    
+    /* ตั้งค่าสีพื้นหลังเริ่มต้น */
+    @apply bg-white text-slate-800;
+
+    /* ทำให้ฟอนต์คมชัดสวยงาม */
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  /* (ทางเลือก) ตกแต่ง Scrollbar ให้เข้ากับธีม
+    นี่เป็นตัวอย่างการใช้สีที่คุณกำหนด (หลังจากตั้งค่าใน tailwind.config.js)
+  */
+  ::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+  }
+  ::-webkit-scrollbar-track {
+    @apply bg-slate-100;
+  }
+  ::-webkit-scrollbar-thumb {
+    /* ใช้สีชมพูจากธีม */
+    @apply bg-theme-pink rounded-full border-2 border-slate-100;
+  }
+  ::-webkit-scrollbar-thumb:hover {
+    /* เปลี่ยนเป็นสีฟ้าเมื่อเอาเมาส์ไปชี้ */
+    @apply bg-theme-blue;
+  }
+}
