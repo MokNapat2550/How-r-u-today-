@@ -291,7 +291,8 @@ const CalendarPage = () => {
               <div
                 key={dayStr}
                 onClick={() => handleDayClick(day)}
-                className={`h-20 p-1 border border-gray-100 rounded-md overflow-hidden cursor-pointer hover:bg-blue-50 relative ${isToday ? 'bg-blue-100' : 'bg-white'}`}
+                /* --- 💎 นี่คือจุดที่แก้ไขครับ: ลบ 'cursor-pointer' ออกแล้ว --- */
+                className={`h-20 p-1 border border-gray-100 rounded-md overflow-hidden hover:bg-blue-50 relative ${isToday ? 'bg-blue-100' : 'bg-white'}`}
               >
                 <div className="flex justify-between items-start">
                   <span className={`text-sm ${isToday ? 'font-bold text-blue-700' : 'text-gray-700'}`}>

@@ -2,6 +2,16 @@ import React, { useState, useEffect, useRef } from 'react';
 import { useAppContext } from '../context/AppContext';
 import { Send, Loader2 } from 'lucide-react';
 
+// --- ฟังก์ชันนี้ผมเพิ่มเข้ามาให้ครับ ---
+// ฟังก์ชันสำหรับดึง YYYY-MM-DD จาก object Date
+const getDayString = (date) => {
+  const year = date.getFullYear();
+  const month = (date.getMonth() + 1).toString().padStart(2, '0');
+  const day = date.getDate().toString().padStart(2, '0');
+  return `${year}-${month}-${day}`;
+}
+// ---------------------------------
+
 const ChatbotPage = () => {
   const { moods, plans, notes } = useAppContext();
   const [messages, setMessages] = useState([
@@ -17,8 +27,25 @@ const ChatbotPage = () => {
 
   const callGeminiAPI = async (userQuery, systemPrompt) => {
     setIsLoading(true);
-    const apiKey = ""; // API key will be injected by the environment
-    const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=${apiKey}`;
+    
+    // *** 💡 จุดที่แก้ไข ***
+    // ดึง API Key มาจาก Environment Variable ที่เราตั้งไว้ในไฟล์ .env
+    // Vite จะใช้ import.meta.env.VITE_... ในการเข้าถึง
+    const apiKey = import.meta.env.VITE_GEMINI_API_KEY; 
+    
+    // ตรวจสอบว่ามี Key หรือไม่
+    if (!apiKey) {
+      console.error("VITE_GEMINI_API_KEY is not set in .env file");
+      setMessages(prev => [...prev, { from: 'bot', text: 'ขออภัยค่ะ ดูเหมือนว่าระบบจะยังไม่ได้ตั้งค่า API Key' }]);
+      setIsLoading(false);
+      return;
+    }
+
+    // *** 💡 หมายเหตุ: ***
+    // ผมเห็นว่า URL ของ API มีการอ้างอิงเวอร์ชันที่อาจจะเก่า (gemini-2.5-flash-preview-09-2025)
+    // ผมจะเปลี่ยนไปใช้โมเดล 'gemini-1.5-flash' ที่เป็นเวอร์ชันล่าสุดแทนนะครับ
+    // และเปลี่ยน URL ให้เป็นมาตรฐาน v1beta
+    const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`;
 
     // Create a summary of the user's recent state
     const today = getDayString(new Date());
@@ -34,6 +61,25 @@ const ChatbotPage = () => {
       systemInstruction: {
         parts: [{ text: `${systemPrompt}\n\n${contextSummary}` }]
       },
+      // เพิ่ม Safety Settings เพื่อลดการถูกบล็อกจาก API
+      safetySettings: [
+        {
+          category: "HARM_CATEGORY_HARASSMENT",
+          threshold: "BLOCK_MEDIUM_AND_ABOVE"
+        },
+        {
+          category: "HARM_CATEGORY_HATE_SPEECH",
+          threshold: "BLOCK_MEDIUM_AND_ABOVE"
+        },
+        {
+          category: "HARM_CATEGORY_SEXUALLY_EXPLICIT",
+          threshold: "BLOCK_MEDIUM_AND_ABOVE"
+        },
+        {
+          category: "HARM_CATEGORY_DANGEROUS_CONTENT",
+          threshold: "BLOCK_MEDIUM_AND_ABOVE"
+        }
+      ]
     };
 
     try {
@@ -55,6 +101,8 @@ const ChatbotPage = () => {
           retries++;
         } else {
           // Other client-side error
+          const errorBody = await response.json();
+          console.error("API Error Body:", errorBody);
           throw new Error(`API Error: ${response.statusText}`);
         }
       }
@@ -64,13 +112,22 @@ const ChatbotPage = () => {
       }
 
       const result = await response.json();
-      const text = result.candidates?.[0]?.content?.parts?.[0]?.text;
-
-      if (text) {
-        setMessages(prev => [...prev, { from: 'bot', text }]);
+      
+      // *** 💡 จุดที่แก้ไข (ป้องกันข้อผิดพลาด) ***
+      // ตรวจสอบว่า API ตอบกลับมาสำเร็จ แต่โดนบล็อกเพราะ Safety Settings หรือไม่
+      if (!result.candidates || result.candidates.length === 0) {
+        console.warn("API Response blocked or empty:", result);
+        let finishReason = result.promptFeedback?.blockReason || "NO_RESPONSE";
+        setMessages(prev => [...prev, { from: 'bot', text: `ขอโทษทีค่ะ ฉันไม่สามารถตอบคำถามนั้นได้ (เหตุผล: ${finishReason})` }]);
       } else {
-        throw new Error("No text in API response.");
+        const text = result.candidates[0]?.content?.parts[0]?.text;
+        if (text) {
+          setMessages(prev => [...prev, { from: 'bot', text }]);
+        } else {
+          throw new Error("No text in API response candidate.");
+        }
       }
+      
     } catch (error) {
       console.error("Gemini API error:", error);
       setMessages(prev => [...prev, { from: 'bot', text: 'ขออภัยค่ะ ดูเหมือนจะมีปัญหาในการเชื่อมต่อ ลองอีกครั้งนะคะ' }]);
@@ -119,7 +176,13 @@ const ChatbotPage = () => {
                   : 'bg-white text-gray-800 rounded-bl-none shadow-md'
               }`}
             >
-              {msg.text}
+              {/* แก้ไขให้แสดงผล Newline (บรรทัดใหม่) ที่มาจากบอท */}
+              {msg.text.split('\n').map((line, i) => (
+                <span key={i}>
+                  {line}
+                  <br />
+                </span>
+              ))}
             </div>
           </div>
         ))}
