@@ -1,38 +1,36 @@
 import React, { useState, useMemo } from 'react';
 import { useAppContext } from '../context/AppContext';
-import { Bell, X, Plus, Notebook, ChevronLeft, ChevronRight, Laugh, Smile, Meh, Frown, Angry } from 'lucide-react';
+import { Bell, X, Plus, Notebook, ChevronLeft, ChevronRight} from 'lucide-react';
+import happyIcon from '../assets/moods/สนุกสนาน.png';
+import goodIcon from '../assets/moods/สบายใจ.png';
+import okayIcon from '../assets/moods/ปกติ.png';
+import sadIcon from '../assets/moods/ซึม.png';
+import angryIcon from '../assets/moods/หน้ามุ่ย.png';
 
 const getDaysInMonth = (year, month) => {
   return new Date(year, month + 1, 0).getDate();
 };
 
 const getFirstDayOfMonth = (year, month) => {
-  return new Date(year, month, 1).getDay(); // 0 = Sunday, 1 = Monday, ...
+  return new Date(year, month, 1).getDay(); 
 };
 
 const getDayString = (date) => {
-  // Use local date parts to avoid timezone issues with toISOString()
   const year = date.getFullYear();
-  const month = (date.getMonth() + 1).toString().padStart(2, '0'); // Months are 0-indexed
+  const month = (date.getMonth() + 1).toString().padStart(2, '0'); 
   const day = date.getDate().toString().padStart(2, '0');
 
-  return `${year}-${month}-${day}`; // YYYY-MM-DD
+  return `${year}-${month}-${day}`; 
 }
 
-// --- Modals for CalendarPage ---
-
-/**
- * MoodModal Component
- * Pops up when a day is clicked.
- */
 const MoodModal = ({ selectedDay, onClose, onOpenPlan, onOpenNote }) => {
   const { addMood } = useAppContext();
   const moods = [
-    { name: 'Happy', icon: Laugh },
-    { name: 'Good', icon: Smile },
-    { name: 'Okay', icon: Meh },
-    { name: 'Sad', icon: Frown },
-    { name: 'Angry', icon: Angry },
+    { name: 'Happy', icon: happyIcon },
+    { name: 'Good', icon: goodIcon },
+    { name: 'Okay', icon: okayIcon },
+    { name: 'Sad', icon: sadIcon },
+    { name: 'Angry', icon: angryIcon },
   ];
 
   const handleMoodSelect = (mood) => {
@@ -56,10 +54,13 @@ const MoodModal = ({ selectedDay, onClose, onOpenPlan, onOpenNote }) => {
               key={mood.name}
               onClick={() => handleMoodSelect(mood)}
               className="flex flex-col items-center text-gray-600 hover:text-pink-400"
-              title={mood.name}
             >
-              <mood.icon size={32} />
-              <span className="text-xs mt-1">{mood.name}</span>
+            <img 
+                src={mood.icon} 
+                alt={mood.name} 
+                className="w-30 h-30" 
+            />
+              <span>{mood.name}</span>
             </button>
           ))}
         </div>
@@ -84,10 +85,6 @@ const MoodModal = ({ selectedDay, onClose, onOpenPlan, onOpenNote }) => {
   );
 };
 
-/**
- * PlanModal Component
- * Pops up to add a new plan.
- */
 const PlanModal = ({ selectedDay, onClose, addNotification }) => {
   const { addPlan } = useAppContext();
   const [planText, setPlanText] = useState('');
@@ -97,14 +94,13 @@ const PlanModal = ({ selectedDay, onClose, addNotification }) => {
     if (trimmedPlan) {
       addPlan(getDayString(selectedDay), trimmedPlan);
       
-      // General notification trigger for the most recent plan
       setTimeout(() => {
         addNotification({
           id: Date.now(),
           title: 'เกี่ยวกับแผนล่าสุดของคุณ',
           message: `"${trimmedPlan}" เป็นอย่างไรบ้าง?`
         });
-      }, 10000); // 30 seconds
+      }, 10000);
       
       setPlanText('');
       onClose();
@@ -120,7 +116,7 @@ const PlanModal = ({ selectedDay, onClose, addNotification }) => {
           value={planText}
           onChange={(e) => setPlanText(e.target.value)}
           className="w-full p-2 border border-gray-300 rounded-md mb-4"
-          placeholder="e.g., ทานข้าวกับเพื่อน"
+          placeholder="วันนี้มีอะไรที่อยากทำบ้างง"
         />
         <div className="flex justify-end space-x-2">
           <button onClick={onClose} className="px-4 py-2 text-gray-600">Cancel</button>
@@ -131,10 +127,7 @@ const PlanModal = ({ selectedDay, onClose, addNotification }) => {
   );
 };
 
-/**
- * NoteModal Component
- * Pops up to add/view a note.
- */
+
 const NoteModal = ({ selectedDay, onClose }) => {
   const { notes, addNote } = useAppContext();
   const dayString = getDayString(selectedDay);
@@ -164,10 +157,6 @@ const NoteModal = ({ selectedDay, onClose }) => {
   );
 };
 
-/**
- * CalendarPage Component
- * The main calendar view.
- */
 const CalendarPage = () => {
   const { moods, plans, notes } = useAppContext();
   const [currentDate, setCurrentDate] = useState(new Date());
@@ -191,11 +180,9 @@ const CalendarPage = () => {
 
   const calendarDays = useMemo(() => {
     const days = [];
-    // Blank days before start of month
     for (let i = 0; i < firstDay; i++) {
       days.push(null);
     }
-    // Days in month
     for (let i = 1; i <= daysInMonth; i++) {
       days.push(new Date(year, month, i));
     }
@@ -212,29 +199,27 @@ const CalendarPage = () => {
     setCurrentDate(prev => new Date(prev.getFullYear(), prev.getMonth() + offset, 1));
   };
 
-  // Find upcoming plans
   const upcomingPlans = useMemo(() => {
     const today = getDayString(new Date());
     return Object.entries(plans)
       .filter(([dateString]) => dateString >= today)
       .sort(([dateA], [dateB]) => dateA.localeCompare(dateB))
-      .slice(0, 3); // Show 3 upcoming
+      .slice(0, 3); 
   }, [plans]);
 
   const getMoodIcon = (moodName) => {
     switch (moodName) {
-      case 'Happy': return '😄';
-      case 'Good': return '😊';
-      case 'Okay': return '😐';
-      case 'Sad': return '😢';
-      case 'Angry': return '😠';
+      case 'Happy': return happyIcon;
+      case 'Good': return goodIcon;
+      case 'Okay': return okayIcon;
+      case 'Sad': return sadIcon;
+      case 'Angry': return angryIcon;
       default: return null;
     }
   };
 
   return (
     <div className="p-4 bg-blue-50 (#D9F3FF... close enough) min-h-screen">
-      {/* Header with Notifications */}
       <header className="flex justify-between items-center mb-4">
         <h2 className="text-2xl font-bold text-gray-700">
           {currentDate.toLocaleDateString('th-TH', { month: 'long', year: 'numeric' })}
@@ -266,7 +251,6 @@ const CalendarPage = () => {
         </div>
       </header>
       
-      {/* Calendar Grid */}
       <div className="bg-white rounded-lg shadow-lg p-4">
         <div className="flex justify-between items-center mb-2">
           <button onClick={() => changeMonth(-1)} className="p-2 rounded-full hover:bg-gray-100"><ChevronLeft size={20} /></button>
@@ -291,20 +275,25 @@ const CalendarPage = () => {
               <div
                 key={dayStr}
                 onClick={() => handleDayClick(day)}
-                /* --- 💎 นี่คือจุดที่แก้ไขครับ: ลบ 'cursor-pointer' ออกแล้ว --- */
-                className={`h-20 p-1 border border-gray-100 rounded-md overflow-hidden hover:bg-blue-50 relative ${isToday ? 'bg-blue-100' : 'bg-white'}`}
+                className={`h-20 p-1 border border-gray-100 rounded-md overflow-hidden cursor-pointer hover:bg-blue-50 relative ${isToday ? 'bg-blue-100' : 'bg-white'}`}
               >
                 <div className="flex justify-between items-start">
                   <span className={`text-sm ${isToday ? 'font-bold text-blue-700' : 'text-gray-700'}`}>
                     {day.getDate()}
                   </span>
                   <div className="flex items-center space-x-1">
-                    {mood && <span className="text-xs" title={mood}>{getMoodIcon(mood)}</span>}
+                    {mood && (
+                      <img
+                        src={getMoodIcon(mood)}
+                        alt={mood}
+                        className="w-10 h-10" 
+                        title={mood}
+                      />)}
                     {note && <button 
                                 onClick={(e) => { e.stopPropagation(); setSelectedDay(day); setShowNoteModal(true);}} 
                                 className="text-xs text-pink-500"
                                 title="View Note"
-                              ><Notebook size={12} /></button>}
+                              ><Notebook size={20} /></button>}
                   </div>
                 </div>
                 <div className="mt-1 text-left">
@@ -323,7 +312,6 @@ const CalendarPage = () => {
         </div>
       </div>
 
-      {/* Upcoming Plans Section */}
       <div className="mt-6 bg-white rounded-lg shadow-lg p-4">
         <h3 className="text-lg font-semibold text-gray-700 mb-2">Upcoming Plans</h3>
         {upcomingPlans.length > 0 ? (
@@ -342,7 +330,6 @@ const CalendarPage = () => {
         )}
       </div>
 
-      {/* Modals */}
       {showMoodModal && selectedDay && (
         <MoodModal
           selectedDay={selectedDay}

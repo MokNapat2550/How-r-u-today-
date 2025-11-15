@@ -1,35 +1,82 @@
-import { createContext, useContext, useState } from 'react';
+import React, { useState, createContext, useContext, useEffect } from 'react';
+
+const LOCAL_STORAGE_KEY = 'how-r-u-today-app-state';
+
+const getInitialState = () => {
+  try {
+    const storedState = localStorage.getItem(LOCAL_STORAGE_KEY);
+    if (storedState) {
+      return JSON.parse(storedState);
+    }
+  } catch (error) {
+    console.error("Failed to parse state from localStorage", error);
+    localStorage.removeItem(LOCAL_STORAGE_KEY); 
+  }
+  
+  return {
+    moods: {},
+    plans: {},
+    notes: {},
+  };
+};
 
 const AppContext = createContext();
 
 const AppProvider = ({ children }) => {
-  const [moods, setMoods] = useState({}); // e.g., { '2025-11-12': 'Happy' }
-  const [plans, setPlans] = useState({}); // e.g., { '2025-11-12': ['Meet doctor', 'Buy groceries'] }
-  const [notes, setNotes] = useState({}); // e.g., { '2025-11-12': 'Feeling tired today...' }
+  const [appState, setAppState] = useState(getInitialState);
+
+  useEffect(() => {
+    try {
+      const stateString = JSON.stringify(appState);
+      localStorage.setItem(LOCAL_STORAGE_KEY, stateString);
+    } catch (error) {
+      console.error("Failed to save state to localStorage", error);
+    }
+  }, [appState]); 
 
   const addMood = (dateString, mood) => {
-    setMoods(prev => ({ ...prev, [dateString]: mood }));
+    setAppState(prev => ({
+      ...prev,
+      moods: { ...prev.moods, [dateString]: mood }
+    }));
   };
 
   const addPlan = (dateString, plan) => {
-    setPlans(prev => {
-      const existingPlans = prev[dateString] || [];
-      return { ...prev, [dateString]: [...existingPlans, plan] };
+    setAppState(prev => {
+      const existingPlans = prev.plans[dateString] || [];
+      return {
+        ...prev,
+        plans: {
+          ...prev.plans,
+          [dateString]: [...existingPlans, plan]
+        }
+      };
     });
   };
 
   const addNote = (dateString, note) => {
-    setNotes(prev => ({ ...prev, [dateString]: note }));
+    setAppState(prev => ({
+      ...prev,
+      notes: { ...prev.notes, [dateString]: note }
+    }));
+  };
+
+  const providerValue = {
+    moods: appState.moods,
+    plans: appState.plans,
+    notes: appState.notes,
+    addMood,
+    addPlan,
+    addNote
   };
 
   return (
-    <AppContext.Provider value={{ moods, plans, notes, addMood, addPlan, addNote }}>
+    <AppContext.Provider value={providerValue}>
       {children}
     </AppContext.Provider>
   );
 };
 
-// Custom hook to easily access context
 const useAppContext = () => useContext(AppContext);
 
 export { AppContext, AppProvider, useAppContext };
