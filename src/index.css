@@ -41,14 +41,17 @@
     @apply bg-slate-100;
   }
   ::-webkit-scrollbar-thumb {
-    @apply bg-theme-pink rounded-full border-2 border-slate-100;
+    /* 🔻 แก้ไข: เปลี่ยนจาก bg-theme-pink เป็น bg-pink-300 (หรือสีที่ชอบ) */
+    @apply bg-pink-300 rounded-full border-2 border-slate-100;
   }
   ::-webkit-scrollbar-thumb:hover {
-    @apply bg-theme-blue;
+    /* 🔻 แก้ไข: เปลี่ยนจาก bg-theme-blue เป็น bg-blue-500 (หรือสีที่ชอบ) */
+    @apply bg-blue-500;
   }
-}
+} /* 👈 🔻 **จุดที่แก้ไข: เพิ่มวงเล็บปีกกาปิด `}` ที่นี่ครับ** */
 
 /* --- 💎 4. เพิ่ม Animation สำหรับฟองอากาศ --- */
+/* (ส่วนนี้ต้องอยู่นอก @layer base) */
 @keyframes float-up {
   0%, 100% {
     transform: translateY(0);
