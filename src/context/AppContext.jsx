@@ -61,13 +61,47 @@ const AppProvider = ({ children }) => {
     }));
   };
 
+  // --- 💎 นี่คือฟังก์ชันที่เพิ่มเข้ามา (1/2) ---
+  const deletePlan = (dateString, planIndex) => {
+    setAppState(prev => {
+      const existingPlans = prev.plans[dateString] || [];
+      // กรอง Plan รายการที่ถูกเลือกออก
+      const updatedPlans = existingPlans.filter((_, index) => index !== planIndex);
+      
+      const newPlansState = { ...prev.plans }; // คัดลอก state 'plans' ทั้งหมด
+      
+      if (updatedPlans.length > 0) {
+        newPlansState[dateString] = updatedPlans; // อัปเดต plan ของวันนั้น
+      } else {
+        delete newPlansState[dateString]; // ถ้าไม่เหลือ plan เลย ให้ลบ key ของวันนั้นทิ้ง
+      }
+      
+      return { ...prev, plans: newPlansState }; // คืนค่า state ใหม่
+    });
+  };
+
+  // --- 💎 นี่คือฟังก์ชันที่เพิ่มเข้ามา (2/2) ---
+  const deleteNote = (dateString) => {
+    setAppState(prev => {
+      const newNotesState = { ...prev.notes }; // คัดลอก state 'notes' ทั้งหมด
+      delete newNotesState[dateString]; // ลบ key ของวันนั้น
+      
+      return { ...prev, notes: newNotesState }; // คืนค่า state ใหม่
+    });
+  };
+
+
+  // --- 💎 อัปเดต providerValue ---
   const providerValue = {
     moods: appState.moods,
     plans: appState.plans,
     notes: appState.notes,
     addMood,
     addPlan,
-    addNote
+    addNote,
+    // --- เพิ่มฟังก์ชันใหม่เข้าไป ---
+    deletePlan,
+    deleteNote
   };
 
   return (

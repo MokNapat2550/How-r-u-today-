@@ -23,7 +23,6 @@ const getDayString = (date) => {
   return `${year}-${month}-${day}`; 
 }
 
-// 💎 ย้ายฟังก์ชันนี้ออกมา เพื่อให้ Modal ใช้ได้ด้วย
 const getMoodIcon = (moodName) => {
   switch (moodName) {
     case 'Happy': return happyIcon;
@@ -35,9 +34,14 @@ const getMoodIcon = (moodName) => {
   }
 };
 
-// 💎 แก้ไข: เพิ่ม props (currentMood, currentPlans, currentNote) เพื่อรับข้อมูลที่บันทึกไว้
+// 💎 แก้ไข MoodModal
 const MoodModal = ({ selectedDay, onClose, onOpenPlan, onOpenNote, currentMood, currentPlans, currentNote }) => {
-  const { addMood } = useAppContext();
+  // 💎 1. ดึงฟังก์ชัน deletePlan และ deleteNote มาจาก context
+  const { addMood, deletePlan, deleteNote } = useAppContext();
+  
+  // 💎 2. สร้าง dayString เพื่อใช้ส่งตอนลบ
+  const dayString = getDayString(selectedDay);
+
   const moods = [
     { name: 'Happy', icon: happyIcon },
     { name: 'Good', icon: goodIcon },
@@ -47,7 +51,7 @@ const MoodModal = ({ selectedDay, onClose, onOpenPlan, onOpenNote, currentMood, 
   ];
 
   const handleMoodSelect = (mood) => {
-    addMood(getDayString(selectedDay), mood.name);
+    addMood(dayString, mood.name);
     onClose();
   };
 
@@ -71,14 +75,14 @@ const MoodModal = ({ selectedDay, onClose, onOpenPlan, onOpenNote, currentMood, 
             <img 
                 src={mood.icon} 
                 alt={mood.name} 
-                className="w-12 h-12 md:w-16 md:h-16" // 💎 ปรับขนาดเล็กน้อย
+                className="w-12 h-12 md:w-16 md:h-16" 
             />
               <span className="text-xs md:text-sm mt-1">{mood.name}</span>
             </button>
           ))}
         </div>
 
-        {/* --- 💎 จุดที่เพิ่มเข้ามา: แสดงข้อมูลที่บันทึกไว้ --- */}
+        {/* --- 💎 3. อัปเดตส่วน "ข้อมูลที่บันทึกไว้" --- */}
         <div className="mb-6 border-t pt-4 space-y-2 text-sm">
           <h4 className="text-center font-semibold text-gray-500 mb-2">ข้อมูลที่บันทึกไว้</h4>
           {currentMood && (
@@ -88,20 +92,47 @@ const MoodModal = ({ selectedDay, onClose, onOpenPlan, onOpenNote, currentMood, 
               <span className="text-gray-700">{currentMood}</span>
             </div>
           )}
+
+          {/* 💎 4. แก้ไขส่วนแสดง Plan ให้มีปุ่มลบ */}
           {currentPlans.length > 0 && (
             <div className="flex items-start">
               <span className="font-semibold w-16 shrink-0">Plans:</span>
-              <ul className="list-disc list-inside text-gray-700">
-                {currentPlans.map((plan, i) => <li key={i}>{plan}</li>)}
+              <ul className="list-disc list-inside text-gray-700 w-full">
+                {currentPlans.map((plan, i) => (
+                  <li 
+                    key={i} 
+                    // 'group' ทำให้ปุ่มลบโผล่เมื่อ hover
+                    className="flex justify-between items-center group hover:bg-gray-50 rounded px-1"
+                  >
+                    <span>{plan}</span>
+                    <button 
+                      onClick={() => deletePlan(dayString, i)}
+                      className="text-red-400 hover:text-red-600 opacity-0 group-hover:opacity-100 transition-opacity ml-2"
+                      title="Delete plan"
+                    >
+                      <X size={16} />
+                    </button>
+                  </li>
+                ))}
               </ul>
             </div>
           )}
+
+          {/* 💎 5. แก้ไขส่วนแสดง Note ให้มีปุ่มลบ */}
           {currentNote && (
-            <div className="flex items-start">
+            <div className="flex items-start group">
               <span className="font-semibold w-16 shrink-0">Note:</span>
-              <p className="text-gray-700 italic truncate">"{currentNote}"</p>
+              <p className="text-gray-700 italic truncate flex-1">"{currentNote}"</p>
+              <button 
+                onClick={() => deleteNote(dayString)}
+                className="text-red-400 hover:text-red-600 opacity-0 group-hover:opacity-100 transition-opacity ml-2"
+                title="Delete note"
+              >
+                <X size={16} />
+              </button>
             </div>
           )}
+
           {(!currentMood && currentPlans.length === 0 && !currentNote) && (
             <p className="text-center text-gray-400">ยังไม่มีข้อมูลสำหรับวันนี้</p>
           )}
@@ -129,6 +160,7 @@ const MoodModal = ({ selectedDay, onClose, onOpenPlan, onOpenNote, currentMood, 
   );
 };
 
+// --- (โค้ดส่วน PlanModal และ NoteModal ไม่มีการแก้ไข) ---
 const PlanModal = ({ selectedDay, onClose, addNotification }) => {
   const { addPlan } = useAppContext();
   const [planText, setPlanText] = useState('');
@@ -201,6 +233,7 @@ const NoteModal = ({ selectedDay, onClose }) => {
   );
 };
 
+// --- (โค้ดส่วน CalendarPage component ไม่มีการแก้ไข นอกจากการส่ง props) ---
 const CalendarPage = () => {
   const { moods, plans, notes } = useAppContext();
   const [currentDate, setCurrentDate] = useState(new Date());
@@ -251,7 +284,6 @@ const CalendarPage = () => {
       .slice(0, 3); 
   }, [plans]);
 
-  // 💎 ดึงข้อมูลสำหรับ Modal มาเตรียมไว้
   const selectedDayStr = selectedDay ? getDayString(selectedDay) : null;
   const selectedMood = selectedDayStr ? moods[selectedDayStr] : null;
   const selectedPlans = selectedDayStr ? plans[selectedDayStr] || [] : [];
@@ -310,23 +342,19 @@ const CalendarPage = () => {
             const note = notes[dayStr];
             const isToday = dayStr === getDayString(new Date());
 
-            // 💎 จุดที่แก้ไข: เช็กว่ามีข้อมูลหรือไม่
             const hasData = mood || dayPlans.length > 0 || note;
 
             return (
               <div
                 key={dayStr}
                 onClick={() => handleDayClick(day)}
-                // 💎 จุดที่แก้ไข: ลบ 'overflow-hidden' และ 'cursor-pointer'
                 className={`h-20 p-1 border border-gray-100 rounded-md hover:bg-blue-50 relative ${isToday ? 'bg-blue-100' : 'bg-white'}`}
               >
-                {/* 💎 จุดที่แก้ไข: จัด layout ใหม่เป็น 'flex-col' เพื่อแสดงจุดตรงกลาง */}
                 <div className="flex flex-col items-center justify-start h-full">
                   <span className={`text-sm ${isToday ? 'font-bold text-blue-700' : 'text-gray-700'}`}>
                     {day.getDate()}
                   </span>
                   
-                  {/* 💎 จุดที่แก้ไข: แสดง "จุดสีชมพู" ถ้ามีข้อมูล */}
                   {hasData && (
                     <div className="mt-2 w-2 h-2 bg-pink-400 rounded-full"></div>
                   )}
@@ -355,14 +383,12 @@ const CalendarPage = () => {
         )}
       </div>
 
-      {/* 💎 จุดที่แก้ไข: ส่ง 'current...' props เข้าไปใน Modal */}
       {showMoodModal && selectedDay && (
         <MoodModal
           selectedDay={selectedDay}
           onClose={() => setShowMoodModal(false)}
           onOpenPlan={() => { setShowMoodModal(false); setShowPlanModal(true); }}
           onOpenNote={() => { setShowMoodModal(false); setShowNoteModal(true); }}
-          // --- เพิ่ม 3 บรรทัดนี้ ---
           currentMood={selectedMood}
           currentPlans={selectedPlans}
           currentNote={selectedNote}
