@@ -23,7 +23,20 @@ const getDayString = (date) => {
   return `${year}-${month}-${day}`; 
 }
 
-const MoodModal = ({ selectedDay, onClose, onOpenPlan, onOpenNote }) => {
+// 💎 ย้ายฟังก์ชันนี้ออกมา เพื่อให้ Modal ใช้ได้ด้วย
+const getMoodIcon = (moodName) => {
+  switch (moodName) {
+    case 'Happy': return happyIcon;
+    case 'Good': return goodIcon;
+    case 'Okay': return okayIcon;
+    case 'Sad': return sadIcon;
+    case 'Angry': return angryIcon;
+    default: return null;
+  }
+};
+
+// 💎 แก้ไข: เพิ่ม props (currentMood, currentPlans, currentNote) เพื่อรับข้อมูลที่บันทึกไว้
+const MoodModal = ({ selectedDay, onClose, onOpenPlan, onOpenNote, currentMood, currentPlans, currentNote }) => {
   const { addMood } = useAppContext();
   const moods = [
     { name: 'Happy', icon: happyIcon },
@@ -58,12 +71,43 @@ const MoodModal = ({ selectedDay, onClose, onOpenPlan, onOpenNote }) => {
             <img 
                 src={mood.icon} 
                 alt={mood.name} 
-                className="w-30 h-30" 
+                className="w-12 h-12 md:w-16 md:h-16" // 💎 ปรับขนาดเล็กน้อย
             />
-              <span>{mood.name}</span>
+              <span className="text-xs md:text-sm mt-1">{mood.name}</span>
             </button>
           ))}
         </div>
+
+        {/* --- 💎 จุดที่เพิ่มเข้ามา: แสดงข้อมูลที่บันทึกไว้ --- */}
+        <div className="mb-6 border-t pt-4 space-y-2 text-sm">
+          <h4 className="text-center font-semibold text-gray-500 mb-2">ข้อมูลที่บันทึกไว้</h4>
+          {currentMood && (
+            <div className="flex items-center">
+              <span className="font-semibold w-16">Mood:</span>
+              <img src={getMoodIcon(currentMood)} alt={currentMood} className="w-6 h-6 mr-1" />
+              <span className="text-gray-700">{currentMood}</span>
+            </div>
+          )}
+          {currentPlans.length > 0 && (
+            <div className="flex items-start">
+              <span className="font-semibold w-16 shrink-0">Plans:</span>
+              <ul className="list-disc list-inside text-gray-700">
+                {currentPlans.map((plan, i) => <li key={i}>{plan}</li>)}
+              </ul>
+            </div>
+          )}
+          {currentNote && (
+            <div className="flex items-start">
+              <span className="font-semibold w-16 shrink-0">Note:</span>
+              <p className="text-gray-700 italic truncate">"{currentNote}"</p>
+            </div>
+          )}
+          {(!currentMood && currentPlans.length === 0 && !currentNote) && (
+            <p className="text-center text-gray-400">ยังไม่มีข้อมูลสำหรับวันนี้</p>
+          )}
+        </div>
+        {/* ------------------------------------------- */}
+
         <div className="flex justify-around">
           <button
             onClick={onOpenPlan}
@@ -207,16 +251,11 @@ const CalendarPage = () => {
       .slice(0, 3); 
   }, [plans]);
 
-  const getMoodIcon = (moodName) => {
-    switch (moodName) {
-      case 'Happy': return happyIcon;
-      case 'Good': return goodIcon;
-      case 'Okay': return okayIcon;
-      case 'Sad': return sadIcon;
-      case 'Angry': return angryIcon;
-      default: return null;
-    }
-  };
+  // 💎 ดึงข้อมูลสำหรับ Modal มาเตรียมไว้
+  const selectedDayStr = selectedDay ? getDayString(selectedDay) : null;
+  const selectedMood = selectedDayStr ? moods[selectedDayStr] : null;
+  const selectedPlans = selectedDayStr ? plans[selectedDayStr] || [] : [];
+  const selectedNote = selectedDayStr ? notes[selectedDayStr] : null;
 
   return (
     <div className="p-4 bg-blue-50 (#D9F3FF... close enough) min-h-screen">
@@ -271,39 +310,25 @@ const CalendarPage = () => {
             const note = notes[dayStr];
             const isToday = dayStr === getDayString(new Date());
 
+            // 💎 จุดที่แก้ไข: เช็กว่ามีข้อมูลหรือไม่
+            const hasData = mood || dayPlans.length > 0 || note;
+
             return (
               <div
                 key={dayStr}
                 onClick={() => handleDayClick(day)}
-                className={`h-20 p-1 border border-gray-100 rounded-md overflow-hidden cursor-pointer hover:bg-blue-50 relative ${isToday ? 'bg-blue-100' : 'bg-white'}`}
+                // 💎 จุดที่แก้ไข: ลบ 'overflow-hidden' และ 'cursor-pointer'
+                className={`h-20 p-1 border border-gray-100 rounded-md hover:bg-blue-50 relative ${isToday ? 'bg-blue-100' : 'bg-white'}`}
               >
-                <div className="flex justify-between items-start">
+                {/* 💎 จุดที่แก้ไข: จัด layout ใหม่เป็น 'flex-col' เพื่อแสดงจุดตรงกลาง */}
+                <div className="flex flex-col items-center justify-start h-full">
                   <span className={`text-sm ${isToday ? 'font-bold text-blue-700' : 'text-gray-700'}`}>
                     {day.getDate()}
                   </span>
-                  <div className="flex items-center space-x-1">
-                    {mood && (
-                      <img
-                        src={getMoodIcon(mood)}
-                        alt={mood}
-                        className="w-10 h-10" 
-                        title={mood}
-                      />)}
-                    {note && <button 
-                                onClick={(e) => { e.stopPropagation(); setSelectedDay(day); setShowNoteModal(true);}} 
-                                className="text-xs text-pink-500"
-                                title="View Note"
-                              ><Notebook size={20} /></button>}
-                  </div>
-                </div>
-                <div className="mt-1 text-left">
-                  {dayPlans.slice(0, 2).map((plan, i) => (
-                    <div key={i} className="text-xs bg-blue-100 text-blue-800 rounded px-1 truncate">
-                      {plan}
-                    </div>
-                  ))}
-                  {dayPlans.length > 2 && (
-                    <div className="text-xs text-gray-500 text-center">...</div>
+                  
+                  {/* 💎 จุดที่แก้ไข: แสดง "จุดสีชมพู" ถ้ามีข้อมูล */}
+                  {hasData && (
+                    <div className="mt-2 w-2 h-2 bg-pink-400 rounded-full"></div>
                   )}
                 </div>
               </div>
@@ -330,12 +355,17 @@ const CalendarPage = () => {
         )}
       </div>
 
+      {/* 💎 จุดที่แก้ไข: ส่ง 'current...' props เข้าไปใน Modal */}
       {showMoodModal && selectedDay && (
         <MoodModal
           selectedDay={selectedDay}
           onClose={() => setShowMoodModal(false)}
           onOpenPlan={() => { setShowMoodModal(false); setShowPlanModal(true); }}
           onOpenNote={() => { setShowMoodModal(false); setShowNoteModal(true); }}
+          // --- เพิ่ม 3 บรรทัดนี้ ---
+          currentMood={selectedMood}
+          currentPlans={selectedPlans}
+          currentNote={selectedNote}
         />
       )}
       {showPlanModal && selectedDay && (
