@@ -1,28 +1,26 @@
 import React, { useState, useMemo } from 'react';
 import { useAppContext } from '../context/AppContext';
-import { Bell, X, Plus, Notebook, ChevronLeft, ChevronRight} from 'lucide-react';
+// 💎 1. Import ไอคอน Volume2 และ VolumeX
+import { Bell, X, Plus, Notebook, ChevronLeft, ChevronRight, Volume2, VolumeX } from 'lucide-react';
 import happyIcon from '../assets/moods/สนุกสนาน.png';
 import goodIcon from '../assets/moods/สบายใจ.png';
 import okayIcon from '../assets/moods/ปกติ.png';
 import sadIcon from '../assets/moods/ซึม.png';
 import angryIcon from '../assets/moods/หน้ามุ่ย.png';
 
+// ... (โค้ด getDaysInMonth, getFirstDayOfMonth, getDayString, getMoodIcon เหมือนเดิม) ...
 const getDaysInMonth = (year, month) => {
   return new Date(year, month + 1, 0).getDate();
 };
-
 const getFirstDayOfMonth = (year, month) => {
   return new Date(year, month, 1).getDay(); 
 };
-
 const getDayString = (date) => {
   const year = date.getFullYear();
   const month = (date.getMonth() + 1).toString().padStart(2, '0'); 
   const day = date.getDate().toString().padStart(2, '0');
-
   return `${year}-${month}-${day}`; 
 }
-
 const getMoodIcon = (moodName) => {
   switch (moodName) {
     case 'Happy': return happyIcon;
@@ -34,11 +32,10 @@ const getMoodIcon = (moodName) => {
   }
 };
 
-// 💎 MoodModal
+// ... (โค้ด MoodModal, PlanModal, NoteModal เหมือนเดิม) ...
 const MoodModal = ({ selectedDay, onClose, onOpenPlan, onOpenNote, currentMood, currentPlans, currentNote }) => {
   const { addMood, deletePlan, deleteNote } = useAppContext();
   const dayString = getDayString(selectedDay);
-
   const moods = [
     { name: 'Happy', icon: happyIcon },
     { name: 'Good', icon: goodIcon },
@@ -46,13 +43,9 @@ const MoodModal = ({ selectedDay, onClose, onOpenPlan, onOpenNote, currentMood, 
     { name: 'Sad', icon: sadIcon },
     { name: 'Angry', icon: angryIcon },
   ];
-
-  // --- 💎 จุดที่แก้ไข (1/3): ลบ onClose() ออก ---
   const handleMoodSelect = (mood) => {
     addMood(dayString, mood.name);
-    // onClose(); // <-- เอาออก
   };
-
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
       <div className="bg-white rounded-lg p-6 w-full max-w-sm">
@@ -79,19 +72,39 @@ const MoodModal = ({ selectedDay, onClose, onOpenPlan, onOpenNote, currentMood, 
             </button>
           ))}
         </div>
-
-        {/* --- ส่วนแสดงข้อมูลที่บันทึกไว้ (เหมือนเดิม) --- */}
         <div className="mb-6 border-t pt-4 space-y-2 text-sm">
           <h4 className="text-center font-semibold text-gray-500 mb-2">ข้อมูลที่บันทึกไว้</h4>
-          
-          {currentMood && (
-            <div className="flex items-center">
-              <span className="font-semibold w-16">Mood:</span>
-              <img src={getMoodIcon(currentMood)} alt={currentMood} className="w-12 h-12 mr-1" /> 
-              <span className="text-gray-700">{currentMood}</span>
+          {(currentMood || currentNote) && (
+            <div className="flex justify-between items-center group">
+              {currentMood ? (
+                <div className="flex items-center">
+                  <span className="font-semibold w-16">Mood:</span>
+                  <img src={getMoodIcon(currentMood)} alt={currentMood} className="w-12 h-12 mr-1" /> 
+                  <span className="text-gray-700">{currentMood}</span>
+                </div>
+              ) : (
+                <div></div>
+              )}
+              {currentNote && (
+                <div className="flex items-center">
+                  <button
+                    onClick={onOpenNote} 
+                    className="text-gray-600 hover:text-pink-500 p-1"
+                    title="View/Edit Note"
+                  >
+                    <Notebook size={20} />
+                  </button>
+                  <button 
+                    onClick={() => deleteNote(dayString)}
+                    className="text-red-400 hover:text-red-600 p-1 opacity-0 group-hover:opacity-100 transition-opacity"
+                    title="Delete note"
+                  >
+                    <X size={16} />
+                  </button>
+                </div>
+              )}
             </div>
           )}
-
           {currentPlans.length > 0 && (
             <div className="flex items-start">
               <span className="font-semibold w-16 shrink-0">Plans:</span>
@@ -114,26 +127,10 @@ const MoodModal = ({ selectedDay, onClose, onOpenPlan, onOpenNote, currentMood, 
               </ul>
             </div>
           )}
-
-          {currentNote && (
-            <div className="flex items-start group">
-              <span className="font-semibold w-16 shrink-0">Note:</span>
-              <p className="text-gray-700 italic truncate flex-1">"{currentNote}"</p>
-              <button 
-                onClick={() => deleteNote(dayString)}
-                className="text-red-400 hover:text-red-600 opacity-0 group-hover:opacity-100 transition-opacity ml-2"
-                title="Delete note"
-              >
-                <X size={16} />
-              </button>
-            </div>
-          )}
-
           {(!currentMood && currentPlans.length === 0 && !currentNote) && (
             <p className="text-center text-gray-400">ยังไม่มีข้อมูลสำหรับวันนี้</p>
           )}
         </div>
-        
         <div className="flex justify-around">
           <button
             onClick={onOpenPlan}
@@ -154,17 +151,13 @@ const MoodModal = ({ selectedDay, onClose, onOpenPlan, onOpenNote, currentMood, 
     </div>
   );
 };
-
-// --- (PlanModal และ NoteModal เหมือนเดิม) ---
 const PlanModal = ({ selectedDay, onClose, addNotification }) => {
   const { addPlan } = useAppContext();
   const [planText, setPlanText] = useState('');
-
   const handleSave = () => {
     const trimmedPlan = planText.trim();
     if (trimmedPlan) {
       addPlan(getDayString(selectedDay), trimmedPlan);
-      
       setTimeout(() => {
         addNotification({
           id: Date.now(),
@@ -172,12 +165,10 @@ const PlanModal = ({ selectedDay, onClose, addNotification }) => {
           message: `"${trimmedPlan}" เป็นอย่างไรบ้าง?`
         });
       }, 10000);
-      
       setPlanText('');
       onClose();
     }
   };
-
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
       <div className="bg-white rounded-lg p-6 w-full max-w-sm">
@@ -197,17 +188,14 @@ const PlanModal = ({ selectedDay, onClose, addNotification }) => {
     </div>
   );
 };
-
 const NoteModal = ({ selectedDay, onClose }) => {
   const { notes, addNote } = useAppContext();
   const dayString = getDayString(selectedDay);
   const [noteText, setNoteText] = useState(notes[dayString] || '');
-
   const handleSave = () => {
     addNote(dayString, noteText);
     onClose();
   };
-
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
       <div className="bg-white rounded-lg p-6 w-full max-w-sm">
@@ -227,9 +215,11 @@ const NoteModal = ({ selectedDay, onClose }) => {
   );
 };
 
-// --- CalendarPage component ---
+// --- (CalendarPage component) ---
 const CalendarPage = () => {
-  const { moods, plans, notes } = useAppContext();
+  // 💎 2. ดึง state และฟังก์ชันเพลงมาจาก context
+  const { moods, plans, notes, isMusicPlaying, toggleMusic } = useAppContext(); 
+  
   const [currentDate, setCurrentDate] = useState(new Date());
   const [selectedDay, setSelectedDay] = useState(null);
   const [showMoodModal, setShowMoodModal] = useState(false);
@@ -242,13 +232,11 @@ const CalendarPage = () => {
   const addNotification = (notif) => {
     setNotifications(prev => [notif, ...prev]);
   };
-
   const month = currentDate.getMonth();
   const year = currentDate.getFullYear();
   const daysInMonth = getDaysInMonth(year, month);
   const firstDay = getFirstDayOfMonth(year, month);
   const weekdays = ['อา.', 'จ.', 'อ.', 'พ.', 'พฤ.', 'ศ.', 'ส.'];
-
   const calendarDays = useMemo(() => {
     const days = [];
     for (let i = 0; i < firstDay; i++) {
@@ -259,17 +247,14 @@ const CalendarPage = () => {
     }
     return days;
   }, [year, month, daysInMonth, firstDay]);
-
   const handleDayClick = (day) => {
     if (!day) return;
     setSelectedDay(day);
     setShowMoodModal(true);
   };
-
   const changeMonth = (offset) => {
     setCurrentDate(prev => new Date(prev.getFullYear(), prev.getMonth() + offset, 1));
   };
-
   const upcomingPlans = useMemo(() => {
     const today = getDayString(new Date());
     return Object.entries(plans)
@@ -277,7 +262,6 @@ const CalendarPage = () => {
       .sort(([dateA], [dateB]) => dateA.localeCompare(dateB))
       .slice(0, 3); 
   }, [plans]);
-
   const selectedDayStr = selectedDay ? getDayString(selectedDay) : null;
   const selectedMood = selectedDayStr ? moods[selectedDayStr] : null;
   const selectedPlans = selectedDayStr ? plans[selectedDayStr] || [] : [];
@@ -289,32 +273,49 @@ const CalendarPage = () => {
         <h2 className="text-2xl font-bold text-gray-700">
           {currentDate.toLocaleDateString('th-TH', { month: 'long', year: 'numeric' })}
         </h2>
-        <div className="relative">
-          <button onClick={() => setShowNotifications(!showNotifications)} className="relative text-gray-600 hover:text-pink-400">
-            <Bell size={24} />
-            {notifications.length > 0 && (
-              <span className="absolute -top-1 -right-1 w-4 h-4 bg-red-500 rounded-full text-white text-xs flex items-center justify-center">
-                {notifications.length}
-              </span>
-            )}
+        
+        {/* --- 💎 3. แก้ไข Header ให้มีปุ่มเพลง --- */}
+        <div className="flex items-center space-x-2"> 
+          
+          {/* ปุ่มเปิด/ปิดเสียง */}
+          <button 
+            onClick={toggleMusic} 
+            className="relative text-gray-600 hover:text-pink-400"
+            title={isMusicPlaying ? "Mute" : "Unmute"}
+          >
+            {isMusicPlaying ? <Volume2 size={24} /> : <VolumeX size={24} />}
           </button>
-          {showNotifications && (
-            <div className="absolute right-0 mt-2 w-64 bg-white rounded-lg shadow-xl z-20 p-4">
-              <h4 className="font-semibold mb-2">Notifications</h4>
-              {notifications.length === 0 ? (
-                <p className="text-sm text-gray-500">No new notifications.</p>
-              ) : (
-                notifications.map(notif => (
-                  <div key={notif.id} className="border-b last:border-b-0 py-2">
-                    <h5 className="font-bold text-sm">{notif.title}</h5>
-                    <p className="text-sm text-gray-600">{notif.message}</p>
-                  </div>
-                ))
+
+          {/* ปุ่ม Notification (อันเดิม) */}
+          <div className="relative">
+            <button onClick={() => setShowNotifications(!showNotifications)} className="relative text-gray-600 hover:text-pink-400">
+              <Bell size={24} />
+              {notifications.length > 0 && (
+                <span className="absolute -top-1 -right-1 w-4 h-4 bg-red-500 rounded-full text-white text-xs flex items-center justify-center">
+                  {notifications.length}
+                </span>
               )}
-            </div>
-          )}
+            </button>
+            {showNotifications && (
+              <div className="absolute right-0 mt-2 w-64 bg-white rounded-lg shadow-xl z-20 p-4">
+                <h4 className="font-semibold mb-2">Notifications</h4>
+                {notifications.length === 0 ? (
+                  <p className="text-sm text-gray-500">No new notifications.</p>
+                ) : (
+                  notifications.map(notif => (
+                    <div key={notif.id} className="border-b last:border-b-0 py-2">
+                      <h5 className="font-bold text-sm">{notif.title}</h5>
+                      <p className="text-sm text-gray-600">{notif.message}</p>
+                    </div>
+                  ))
+                )}
+              </div>
+            )}
+          </div>
         </div>
       </header>
+      
+      {/* ... (โค้ดส่วนที่เหลือของ CalendarPage (ปฏิทิน, upcoming plans, modals) เหมือนเดิม) ... */}
       
       <div className="bg-white rounded-lg shadow-lg p-4">
         <div className="flex justify-between items-center mb-2">
@@ -335,7 +336,6 @@ const CalendarPage = () => {
             const dayPlans = plans[dayStr] || [];
             const note = notes[dayStr];
             const isToday = dayStr === getDayString(new Date());
-
             const hasData = mood || dayPlans.length > 0 || note;
 
             return (
@@ -348,7 +348,6 @@ const CalendarPage = () => {
                   <span className={`text-sm ${isToday ? 'font-bold text-blue-700' : 'text-gray-700'}`}>
                     {day.getDate()}
                   </span>
-                  
                   {hasData && (
                     <div className="mt-2 w-2 h-2 bg-pink-400 rounded-full"></div>
                   )}
@@ -358,7 +357,6 @@ const CalendarPage = () => {
           })}
         </div>
       </div>
-
       <div className="mt-6 bg-white rounded-lg shadow-lg p-4">
         <h3 className="text-lg font-semibold text-gray-700 mb-2">Upcoming Plans</h3>
         {upcomingPlans.length > 0 ? (
@@ -376,14 +374,12 @@ const CalendarPage = () => {
           <p className="text-gray-500">No upcoming plans. Time to relax!</p>
         )}
       </div>
-
-      {/* --- 💎 จุดที่แก้ไข (2/3 และ 3/3) --- */}
       {showMoodModal && selectedDay && (
         <MoodModal
           selectedDay={selectedDay}
           onClose={() => setShowMoodModal(false)}
-          onOpenPlan={() => setShowPlanModal(true)} // <-- แก้ไข
-          onOpenNote={() => setShowNoteModal(true)} // <-- แก้ไข
+          onOpenPlan={() => setShowPlanModal(true)}
+          onOpenNote={() => setShowNoteModal(true)}
           currentMood={selectedMood}
           currentPlans={selectedPlans}
           currentNote={selectedNote}

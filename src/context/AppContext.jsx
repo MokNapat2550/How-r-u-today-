@@ -24,8 +24,11 @@ const AppContext = createContext();
 
 const AppProvider = ({ children }) => {
   const [appState, setAppState] = useState(getInitialState);
+  
+  // --- 💎 1. แก้ไข State เริ่มต้นสำหรับเพลง ---
+  // เปลี่ยนจาก false เป็น true
+  const [isMusicPlaying, setIsMusicPlaying] = useState(false); 
 
-  // บันทึกลง localStorage ทุกครั้งที่ state เปลี่ยน
   useEffect(() => {
     try {
       const stateString = JSON.stringify(appState);
@@ -62,7 +65,6 @@ const AppProvider = ({ children }) => {
     }));
   };
 
-  // --- 💎 ฟังก์ชันลบ Plan (เพิ่มใหม่) ---
   const deletePlan = (dateString, planIndex) => {
     setAppState(prev => {
       const existingPlans = prev.plans[dateString] || [];
@@ -80,7 +82,6 @@ const AppProvider = ({ children }) => {
     });
   };
 
-  // --- 💎 ฟังก์ชันลบ Note (เพิ่มใหม่) ---
   const deleteNote = (dateString) => {
     setAppState(prev => {
       const newNotesState = { ...prev.notes }; 
@@ -90,8 +91,10 @@ const AppProvider = ({ children }) => {
     });
   };
 
+  const toggleMusic = () => {
+    setIsMusicPlaying(prev => !prev);
+  };
 
-  // --- 💎 อัปเดต providerValue ---
   const providerValue = {
     moods: appState.moods,
     plans: appState.plans,
@@ -99,9 +102,10 @@ const AppProvider = ({ children }) => {
     addMood,
     addPlan,
     addNote,
-    // --- เพิ่มฟังก์ชันลบเข้าไป ---
     deletePlan,
-    deleteNote
+    deleteNote,
+    isMusicPlaying,
+    toggleMusic
   };
 
   return (

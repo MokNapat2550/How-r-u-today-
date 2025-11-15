@@ -62,7 +62,6 @@ const AdModal = ({ onClose, setCurrentPage }) => {
         <div className="fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center p-4 z-[100]">
             <div className="bg-white rounded-2xl shadow-3xl w-full max-w-sm p-6 relative animate-fadeIn transition-transform transform scale-100">
                 
-                {/* Close Button (กากบาท) */}
                 <button
                     onClick={onClose}
                     className="absolute top-3 right-3 p-1 bg-white rounded-full text-gray-500 hover:bg-gray-100 hover:text-gray-800 transition shadow-lg"
@@ -73,7 +72,9 @@ const AdModal = ({ onClose, setCurrentPage }) => {
 
                 <div className="text-center space-y-4">
                    <img src={adsgif} alt="adsimg" />
-                   <h1  className='text-2xl mb-50px'>Welcome to Engine Nebula</h1>
+                   
+                   {/* --- 💎 นี่คือจุดที่แก้ไข: เพิ่ม font-pirata --- */}
+                   <h1  className='text-2xl mb-50px font-pirata'>Welcome to Engine Nebula</h1>
                    
                 </div>
             </div>
@@ -83,19 +84,15 @@ const AdModal = ({ onClose, setCurrentPage }) => {
 
 
 const HomePage = ({ setCurrentPage }) => {
-    // 1. State เพื่อควบคุมการแสดง Pop-up
     const [showAd, setShowAd] = useState(true);
-    const gifPath = '/sheep.gif'; // !! อย่าลืมเปลี่ยนชื่อไฟล์ GIF ของคุณ !!
+    const gifPath = '/sheep.gif';
 
-    // 2. ฟังก์ชันสำหรับปิด Pop-up
     const handleAdClose = () => {
         setShowAd(false);
     };
 
     return (
         <div className="relative flex flex-col items-center justify-center min-h-screen bg-white overflow-hidden">
-             {/* Load Tailwind CSS and custom styles */}
-            <script src="https://cdn.tailwindcss.com"></script>
             <style dangerouslySetInnerHTML={{ __html: styles }} />
 
             {/* Background Animations */}
@@ -132,7 +129,6 @@ const HomePage = ({ setCurrentPage }) => {
                 Click
             </button>
 
-            {/* 3. แสดง Ad Modal หาก showAd เป็น true */}
             {showAd && (
                 <AdModal 
                     onClose={handleAdClose} 
