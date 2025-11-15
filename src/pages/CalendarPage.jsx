@@ -34,12 +34,9 @@ const getMoodIcon = (moodName) => {
   }
 };
 
-// 💎 แก้ไข MoodModal
+// 💎 MoodModal
 const MoodModal = ({ selectedDay, onClose, onOpenPlan, onOpenNote, currentMood, currentPlans, currentNote }) => {
-  // 💎 1. ดึงฟังก์ชัน deletePlan และ deleteNote มาจาก context
   const { addMood, deletePlan, deleteNote } = useAppContext();
-  
-  // 💎 2. สร้าง dayString เพื่อใช้ส่งตอนลบ
   const dayString = getDayString(selectedDay);
 
   const moods = [
@@ -50,9 +47,10 @@ const MoodModal = ({ selectedDay, onClose, onOpenPlan, onOpenNote, currentMood, 
     { name: 'Angry', icon: angryIcon },
   ];
 
+  // --- 💎 จุดที่แก้ไข (1/3): ลบ onClose() ออก ---
   const handleMoodSelect = (mood) => {
     addMood(dayString, mood.name);
-    onClose();
+    // onClose(); // <-- เอาออก
   };
 
   return (
@@ -82,18 +80,18 @@ const MoodModal = ({ selectedDay, onClose, onOpenPlan, onOpenNote, currentMood, 
           ))}
         </div>
 
-        {/* --- 💎 3. อัปเดตส่วน "ข้อมูลที่บันทึกไว้" --- */}
+        {/* --- ส่วนแสดงข้อมูลที่บันทึกไว้ (เหมือนเดิม) --- */}
         <div className="mb-6 border-t pt-4 space-y-2 text-sm">
           <h4 className="text-center font-semibold text-gray-500 mb-2">ข้อมูลที่บันทึกไว้</h4>
+          
           {currentMood && (
             <div className="flex items-center">
               <span className="font-semibold w-16">Mood:</span>
-              <img src={getMoodIcon(currentMood)} alt={currentMood} className="w-6 h-6 mr-1" />
+              <img src={getMoodIcon(currentMood)} alt={currentMood} className="w-12 h-12 mr-1" /> 
               <span className="text-gray-700">{currentMood}</span>
             </div>
           )}
 
-          {/* 💎 4. แก้ไขส่วนแสดง Plan ให้มีปุ่มลบ */}
           {currentPlans.length > 0 && (
             <div className="flex items-start">
               <span className="font-semibold w-16 shrink-0">Plans:</span>
@@ -101,7 +99,6 @@ const MoodModal = ({ selectedDay, onClose, onOpenPlan, onOpenNote, currentMood, 
                 {currentPlans.map((plan, i) => (
                   <li 
                     key={i} 
-                    // 'group' ทำให้ปุ่มลบโผล่เมื่อ hover
                     className="flex justify-between items-center group hover:bg-gray-50 rounded px-1"
                   >
                     <span>{plan}</span>
@@ -118,7 +115,6 @@ const MoodModal = ({ selectedDay, onClose, onOpenPlan, onOpenNote, currentMood, 
             </div>
           )}
 
-          {/* 💎 5. แก้ไขส่วนแสดง Note ให้มีปุ่มลบ */}
           {currentNote && (
             <div className="flex items-start group">
               <span className="font-semibold w-16 shrink-0">Note:</span>
@@ -137,8 +133,7 @@ const MoodModal = ({ selectedDay, onClose, onOpenPlan, onOpenNote, currentMood, 
             <p className="text-center text-gray-400">ยังไม่มีข้อมูลสำหรับวันนี้</p>
           )}
         </div>
-        {/* ------------------------------------------- */}
-
+        
         <div className="flex justify-around">
           <button
             onClick={onOpenPlan}
@@ -160,7 +155,7 @@ const MoodModal = ({ selectedDay, onClose, onOpenPlan, onOpenNote, currentMood, 
   );
 };
 
-// --- (โค้ดส่วน PlanModal และ NoteModal ไม่มีการแก้ไข) ---
+// --- (PlanModal และ NoteModal เหมือนเดิม) ---
 const PlanModal = ({ selectedDay, onClose, addNotification }) => {
   const { addPlan } = useAppContext();
   const [planText, setPlanText] = useState('');
@@ -203,7 +198,6 @@ const PlanModal = ({ selectedDay, onClose, addNotification }) => {
   );
 };
 
-
 const NoteModal = ({ selectedDay, onClose }) => {
   const { notes, addNote } = useAppContext();
   const dayString = getDayString(selectedDay);
@@ -233,7 +227,7 @@ const NoteModal = ({ selectedDay, onClose }) => {
   );
 };
 
-// --- (โค้ดส่วน CalendarPage component ไม่มีการแก้ไข นอกจากการส่ง props) ---
+// --- CalendarPage component ---
 const CalendarPage = () => {
   const { moods, plans, notes } = useAppContext();
   const [currentDate, setCurrentDate] = useState(new Date());
@@ -383,12 +377,13 @@ const CalendarPage = () => {
         )}
       </div>
 
+      {/* --- 💎 จุดที่แก้ไข (2/3 และ 3/3) --- */}
       {showMoodModal && selectedDay && (
         <MoodModal
           selectedDay={selectedDay}
           onClose={() => setShowMoodModal(false)}
-          onOpenPlan={() => { setShowMoodModal(false); setShowPlanModal(true); }}
-          onOpenNote={() => { setShowMoodModal(false); setShowNoteModal(true); }}
+          onOpenPlan={() => setShowPlanModal(true)} // <-- แก้ไข
+          onOpenNote={() => setShowNoteModal(true)} // <-- แก้ไข
           currentMood={selectedMood}
           currentPlans={selectedPlans}
           currentNote={selectedNote}

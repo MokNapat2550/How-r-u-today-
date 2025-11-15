@@ -25,6 +25,7 @@ const AppContext = createContext();
 const AppProvider = ({ children }) => {
   const [appState, setAppState] = useState(getInitialState);
 
+  // บันทึกลง localStorage ทุกครั้งที่ state เปลี่ยน
   useEffect(() => {
     try {
       const stateString = JSON.stringify(appState);
@@ -61,32 +62,31 @@ const AppProvider = ({ children }) => {
     }));
   };
 
-  // --- 💎 นี่คือฟังก์ชันที่เพิ่มเข้ามา (1/2) ---
+  // --- 💎 ฟังก์ชันลบ Plan (เพิ่มใหม่) ---
   const deletePlan = (dateString, planIndex) => {
     setAppState(prev => {
       const existingPlans = prev.plans[dateString] || [];
-      // กรอง Plan รายการที่ถูกเลือกออก
       const updatedPlans = existingPlans.filter((_, index) => index !== planIndex);
       
-      const newPlansState = { ...prev.plans }; // คัดลอก state 'plans' ทั้งหมด
+      const newPlansState = { ...prev.plans }; 
       
       if (updatedPlans.length > 0) {
-        newPlansState[dateString] = updatedPlans; // อัปเดต plan ของวันนั้น
+        newPlansState[dateString] = updatedPlans; 
       } else {
-        delete newPlansState[dateString]; // ถ้าไม่เหลือ plan เลย ให้ลบ key ของวันนั้นทิ้ง
+        delete newPlansState[dateString]; 
       }
       
-      return { ...prev, plans: newPlansState }; // คืนค่า state ใหม่
+      return { ...prev, plans: newPlansState }; 
     });
   };
 
-  // --- 💎 นี่คือฟังก์ชันที่เพิ่มเข้ามา (2/2) ---
+  // --- 💎 ฟังก์ชันลบ Note (เพิ่มใหม่) ---
   const deleteNote = (dateString) => {
     setAppState(prev => {
-      const newNotesState = { ...prev.notes }; // คัดลอก state 'notes' ทั้งหมด
-      delete newNotesState[dateString]; // ลบ key ของวันนั้น
+      const newNotesState = { ...prev.notes }; 
+      delete newNotesState[dateString]; 
       
-      return { ...prev, notes: newNotesState }; // คืนค่า state ใหม่
+      return { ...prev, notes: newNotesState }; 
     });
   };
 
@@ -99,7 +99,7 @@ const AppProvider = ({ children }) => {
     addMood,
     addPlan,
     addNote,
-    // --- เพิ่มฟังก์ชันใหม่เข้าไป ---
+    // --- เพิ่มฟังก์ชันลบเข้าไป ---
     deletePlan,
     deleteNote
   };
