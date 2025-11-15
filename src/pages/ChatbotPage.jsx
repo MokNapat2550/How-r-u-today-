@@ -41,11 +41,7 @@ const ChatbotPage = () => {
       return;
     }
 
-    // *** 💡 หมายเหตุ: ***
-    // ผมเห็นว่า URL ของ API มีการอ้างอิงเวอร์ชันที่อาจจะเก่า (gemini-2.5-flash-preview-09-2025)
-    // ผมจะเปลี่ยนไปใช้โมเดล 'gemini-1.5-flash' ที่เป็นเวอร์ชันล่าสุดแทนนะครับ
-    // และเปลี่ยน URL ให้เป็นมาตรฐาน v1beta
-    const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`;
+    const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`;
 
     // Create a summary of the user's recent state
     const today = getDayString(new Date());
