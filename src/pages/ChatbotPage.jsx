@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { useAppContext } from '../context/AppContext';
+// 💎 1. อัปเดต Path ให้ถูกต้อง (อิงจากไฟล์ CalendarPage ของคุณ)
+import { useAppContext } from '../context/AppContext.jsx';
 import { Send, Loader2 } from 'lucide-react';
 
 // --- ฟังก์ชันนี้ผมเพิ่มเข้ามาให้ครับ ---
@@ -13,13 +14,32 @@ const getDayString = (date) => {
 // ---------------------------------
 
 const ChatbotPage = () => {
-  const { moods, plans, notes } = useAppContext();
+  // 💎 2. เพิ่ม consumeChatbotQueue
+  const { moods, plans, notes, consumeChatbotQueue } = useAppContext();
   const [messages, setMessages] = useState([
     { from: 'bot', text: 'สวัสดีค่ะ มีอะไรให้ช่วยไหมคะ? เล่าเรื่องที่คุณกังวลใจให้ฟังได้นะ' }
   ]);
   const [input, setInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const messagesEndRef = React.useRef(null);
+
+  // 💎 3. เพิ่ม useEffect นี้เพื่อ "เช็คกล่องจดหมาย" ตอนเปิดหน้าแชท
+  useEffect(() => {
+    // "เปิดอ่านจดหมาย"
+    const queuedMessages = consumeChatbotQueue(); // (นี่คือฟังก์ชันจาก AppContext)
+    
+    if (queuedMessages.length > 0) {
+      // ถ้ามี, ก็เพิ่มลงในหน้าต่างแชท
+      // (เราแปลงให้เป็น format ที่โค้ดของคุณใช้ คือ {from, text})
+      const formattedMessages = queuedMessages.map(msg => ({
+        from: 'bot',
+        text: msg.text 
+      }));
+      setMessages(prev => [...prev, ...formattedMessages]);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []); // [] = ทำงานแค่ครั้งแรกที่หน้านี้โหลด
+
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -28,7 +48,7 @@ const ChatbotPage = () => {
   const callGeminiAPI = async (userQuery, systemPrompt) => {
     setIsLoading(true);
     
-    // *** 💡 จุดที่แก้ไข ***
+    // *** 💡 จุดที่แก้ไข (โค้ดของคุณ) ***
     // ดึง API Key มาจาก Environment Variable ที่เราตั้งไว้ในไฟล์ .env
     // Vite จะใช้ import.meta.env.VITE_... ในการเข้าถึง
     const apiKey = import.meta.env.VITE_GEMINI_API_KEY; 
@@ -41,7 +61,7 @@ const ChatbotPage = () => {
       return;
     }
 
-    const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`;
+    const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=${apiKey}`;
 
     // Create a summary of the user's recent state
     const today = getDayString(new Date());
@@ -57,7 +77,7 @@ const ChatbotPage = () => {
       systemInstruction: {
         parts: [{ text: `${systemPrompt}\n\n${contextSummary}` }]
       },
-      // เพิ่ม Safety Settings เพื่อลดการถูกบล็อกจาก API
+      // เพิ่ม Safety Settings (โค้ดของคุณ)
       safetySettings: [
         {
           category: "HARM_CATEGORY_HARASSMENT",
@@ -109,7 +129,7 @@ const ChatbotPage = () => {
 
       const result = await response.json();
       
-      // *** 💡 จุดที่แก้ไข (ป้องกันข้อผิดพลาด) ***
+      // *** 💡 จุดที่แก้ไข (โค้ดของคุณ) ***
       // ตรวจสอบว่า API ตอบกลับมาสำเร็จ แต่โดนบล็อกเพราะ Safety Settings หรือไม่
       if (!result.candidates || result.candidates.length === 0) {
         console.warn("API Response blocked or empty:", result);
@@ -136,6 +156,7 @@ const ChatbotPage = () => {
     if (input.trim() === '') return;
 
     const userMessage = { from: 'user', text: input };
+    const currentInput = input; // (เก็บค่า input ไว้ก่อน setInput)
     setMessages(prev => [...prev, userMessage]);
     setInput('');
 
@@ -152,17 +173,17 @@ const ChatbotPage = () => {
       6.  **ภาษา:** ตอบเป็นภาษาไทยด้วยน้ำเสียงที่อบอุ่นและเป็นกันเอง
     `;
     
-    callGeminiAPI(input, systemPrompt);
+    callGeminiAPI(currentInput, systemPrompt); // (ใช้ currentInput)
   };
 
   return (
     <div className="flex flex-col h-screen bg-white">
-      <header className="bg-pink-200 (#F8BBD0) p-4 text-center text-pink-800 font-semibold shadow-md">
+      <header className="bg-pink-200 p-4 text-center text-pink-800 font-semibold shadow-md">
         Mental Health Chatbot
       </header>
       
       {/* Message List */}
-      <div className="flex-1 overflow-y-auto p-4 space-y-4 bg-blue-50 (#D9F3FF)">
+      <div className="flex-1 overflow-y-auto p-4 space-y-4 bg-blue-50">
         {messages.map((msg, index) => (
           <div key={index} className={`flex ${msg.from === 'user' ? 'justify-end' : 'justify-start'}`}>
             <div
@@ -172,7 +193,7 @@ const ChatbotPage = () => {
                   : 'bg-white text-gray-800 rounded-bl-none shadow-md'
               }`}
             >
-              {/* แก้ไขให้แสดงผล Newline (บรรทัดใหม่) ที่มาจากบอท */}
+              {/* (โค้ดของคุณสำหรับแสดงผล Newline) */}
               {msg.text.split('\n').map((line, i) => (
                 <span key={i}>
                   {line}
@@ -206,7 +227,7 @@ const ChatbotPage = () => {
         <button
           onClick={handleSend}
           disabled={isLoading}
-          className="ml-3 p-3 bg-pink-300 (#F8BBD0) text-white rounded-full hover:bg-pink-400 disabled:opacity-50"
+          className="ml-3 p-3 bg-pink-300 text-white rounded-full hover:bg-pink-400 disabled:opacity-50"
         >
           <Send size={24} />
         </button>
@@ -214,4 +235,5 @@ const ChatbotPage = () => {
     </div>
   );
 };
+
 export default ChatbotPage;

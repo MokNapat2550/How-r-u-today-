@@ -1,14 +1,31 @@
 import React, { useState, useMemo } from 'react';
-import { useAppContext } from '../context/AppContext';
-// 💎 1. Import ไอคอน Volume2 และ VolumeX
-import { Bell, X, Plus, Notebook, ChevronLeft, ChevronRight, Volume2, VolumeX } from 'lucide-react';
+// 💎 1. ตรวจสอบ Path นี้ให้ถูกต้องนะครับ ถ้า context อยู่ใน src/context/ Path นี้ถูกต้องครับ
+import { useAppContext } from '../context/AppContext.jsx'; 
+import {
+  Bell,
+  X,
+  Plus,
+  Notebook,
+  ChevronLeft,
+  ChevronRight,
+  Laugh, // (Icon เก่า, อาจจะไม่จำเป็นแล้ว)
+  Smile, // (Icon เก่า, อาจจะไม่จำเป็นแล้ว)
+  Meh,   // (Icon เก่า, อาจจะไม่จำเป็นแล้ว)
+  Frown, // (Icon เก่า, อาจจะไม่จำเป็นแล้ว)
+  Angry, // (Icon เก่า, อาจจะไม่จำเป็นแล้ว)
+  Volume2, // (Icon ที่คุณเพิ่มมา)
+  VolumeX  // (Icon ที่คุณเพิ่มมา)
+} from 'lucide-react';
+
+// 💎 2. ตรวจสอบ Path รูปภาพเหล่านี้ให้ถูกต้อง
+// นี่หมายความว่าคุณต้องมีโฟลเดอร์ assets/moods/ ข้างใน src/
 import happyIcon from '../assets/moods/สนุกสนาน.png';
 import goodIcon from '../assets/moods/สบายใจ.png';
 import okayIcon from '../assets/moods/ปกติ.png';
 import sadIcon from '../assets/moods/ซึม.png';
 import angryIcon from '../assets/moods/หน้ามุ่ย.png';
 
-// ... (โค้ด getDaysInMonth, getFirstDayOfMonth, getDayString, getMoodIcon เหมือนเดิม) ...
+// --- Helper Functions for Calendar ---
 const getDaysInMonth = (year, month) => {
   return new Date(year, month + 1, 0).getDate();
 };
@@ -32,8 +49,14 @@ const getMoodIcon = (moodName) => {
   }
 };
 
-// ... (โค้ด MoodModal, PlanModal, NoteModal เหมือนเดิม) ...
+// --- Modals for CalendarPage ---
+
+/**
+ * MoodModal Component (โค้ดของคุณ)
+ * (เพิ่ม deletePlan และ deleteNote จาก useAppContext)
+ */
 const MoodModal = ({ selectedDay, onClose, onOpenPlan, onOpenNote, currentMood, currentPlans, currentNote }) => {
+  // 💎 3. AppContext ต้องมี deletePlan และ deleteNote ด้วย (ผมจะเพิ่มให้ในไฟล์ถัดไป)
   const { addMood, deletePlan, deleteNote } = useAppContext();
   const dayString = getDayString(selectedDay);
   const moods = [
@@ -64,9 +87,9 @@ const MoodModal = ({ selectedDay, onClose, onOpenPlan, onOpenNote, currentMood, 
               className="flex flex-col items-center text-gray-600 hover:text-pink-400"
             >
             <img 
-                src={mood.icon} 
-                alt={mood.name} 
-                className="w-12 h-12 md:w-16 md:h-16" 
+              src={mood.icon} 
+              alt={mood.name} 
+              className="w-12 h-12 md:w-16 md:h-16" 
             />
               <span className="text-xs md:text-sm mt-1">{mood.name}</span>
             </button>
@@ -134,14 +157,14 @@ const MoodModal = ({ selectedDay, onClose, onOpenPlan, onOpenNote, currentMood, 
         <div className="flex justify-around">
           <button
             onClick={onOpenPlan}
-            className="px-6 py-2 bg-blue-100 (#D9F3FF) text-blue-800 rounded-full font-semibold hover:bg-blue-200"
+            className="px-6 py-2 bg-blue-100 text-blue-800 rounded-full font-semibold hover:bg-blue-200"
           >
             <Plus size={16} className="inline mr-1" />
             Plan
           </button>
           <button
             onClick={onOpenNote}
-            className="px-6 py-2 bg-pink-100 (#F8BBD0) text-pink-800 rounded-full font-semibold hover:bg-pink-200"
+            className="px-6 py-2 bg-pink-100 text-pink-800 rounded-full font-semibold hover:bg-pink-200"
           >
             <Notebook size={16} className="inline mr-1" />
             Note
@@ -151,20 +174,37 @@ const MoodModal = ({ selectedDay, onClose, onOpenPlan, onOpenNote, currentMood, 
     </div>
   );
 };
-const PlanModal = ({ selectedDay, onClose, addNotification }) => {
+
+/**
+ * PlanModal Component
+ * (นี่คือส่วนที่ผมอัปเดตให้ตามคำขอของคุณครับ)
+ */
+const PlanModal = ({ selectedDay, onClose, addNotification, queueChatbotMessage }) => { // 💎 4. รับ queueChatbotMessage
   const { addPlan } = useAppContext();
   const [planText, setPlanText] = useState('');
+
   const handleSave = () => {
     const trimmedPlan = planText.trim();
     if (trimmedPlan) {
       addPlan(getDayString(selectedDay), trimmedPlan);
+      
+      // 💎 5. สร้าง object แจ้งเตือน
+      const notif = {
+        id: Date.now(),
+        title: 'เกี่ยวกับแผนล่าสุดของคุณ',
+        message: `"${trimmedPlan}" เป็นอย่างไรบ้าง?`
+      };
+
       setTimeout(() => {
-        addNotification({
-          id: Date.now(),
-          title: 'เกี่ยวกับแผนล่าสุดของคุณ',
-          message: `"${trimmedPlan}" เป็นอย่างไรบ้าง?`
-        });
-      }, 10000);
+        // 1. เพิ่มการแจ้งเตือน (กระดิ่ง)
+        addNotification(notif);
+        
+        // 2. ส่งข้อความเข้าคิว Chatbot (ฟีเจอร์ที่คุณขอ)
+        if (queueChatbotMessage) {
+          queueChatbotMessage(notif.message);
+        }
+      }, 5000); // 5 seconds (ตามโค้ดของคุณ)
+
       setPlanText('');
       onClose();
     }
@@ -188,6 +228,10 @@ const PlanModal = ({ selectedDay, onClose, addNotification }) => {
     </div>
   );
 };
+
+/**
+ * NoteModal Component (โค้ดของคุณ)
+ */
 const NoteModal = ({ selectedDay, onClose }) => {
   const { notes, addNote } = useAppContext();
   const dayString = getDayString(selectedDay);
@@ -215,10 +259,18 @@ const NoteModal = ({ selectedDay, onClose }) => {
   );
 };
 
-// --- (CalendarPage component) ---
+/**
+ * CalendarPage Component
+ * (อัปเดตให้ดึงและส่งต่อฟังก์ชันใหม่)
+ */
 const CalendarPage = () => {
-  // 💎 2. ดึง state และฟังก์ชันเพลงมาจาก context
-  const { moods, plans, notes, isMusicPlaying, toggleMusic } = useAppContext(); 
+  // 💎 6. ดึงฟังก์ชันใหม่ทั้งหมดจาก Context
+  const { 
+    moods, plans, notes, 
+    isMusicPlaying, toggleMusic, // (ฟีเจอร์ใหม่ของคุณ)
+    queueChatbotMessage,          // (ฟีเจอร์ที่ผมเพิ่มให้)
+    // deletePlan, deleteNote (เราย้ายไปเรียกใน MoodModal แล้ว)
+  } = useAppContext(); 
   
   const [currentDate, setCurrentDate] = useState(new Date());
   const [selectedDay, setSelectedDay] = useState(null);
@@ -247,6 +299,7 @@ const CalendarPage = () => {
     }
     return days;
   }, [year, month, daysInMonth, firstDay]);
+
   const handleDayClick = (day) => {
     if (!day) return;
     setSelectedDay(day);
@@ -262,19 +315,21 @@ const CalendarPage = () => {
       .sort(([dateA], [dateB]) => dateA.localeCompare(dateB))
       .slice(0, 3); 
   }, [plans]);
+
+  // (โค้ดดึงข้อมูลสำหรับ MoodModal ที่คุณเพิ่มมา)
   const selectedDayStr = selectedDay ? getDayString(selectedDay) : null;
   const selectedMood = selectedDayStr ? moods[selectedDayStr] : null;
   const selectedPlans = selectedDayStr ? plans[selectedDayStr] || [] : [];
   const selectedNote = selectedDayStr ? notes[selectedDayStr] : null;
 
   return (
-    <div className="p-4 bg-blue-50 (#D9F3FF... close enough) min-h-screen">
+    <div className="p-4 bg-blue-50 min-h-screen">
       <header className="flex justify-between items-center mb-4">
         <h2 className="text-2xl font-bold text-gray-700">
           {currentDate.toLocaleDateString('th-TH', { month: 'long', year: 'numeric' })}
         </h2>
         
-        {/* --- 💎 3. แก้ไข Header ให้มีปุ่มเพลง --- */}
+        {/* (Header ที่มีปุ่มเพลงของคุณ) */}
         <div className="flex items-center space-x-2"> 
           
           {/* ปุ่มเปิด/ปิดเสียง */}
@@ -315,8 +370,7 @@ const CalendarPage = () => {
         </div>
       </header>
       
-      {/* ... (โค้ดส่วนที่เหลือของ CalendarPage (ปฏิทิน, upcoming plans, modals) เหมือนเดิม) ... */}
-      
+      {/* (Calendar Grid (โค้ดของคุณ)) */}
       <div className="bg-white rounded-lg shadow-lg p-4">
         <div className="flex justify-between items-center mb-2">
           <button onClick={() => changeMonth(-1)} className="p-2 rounded-full hover:bg-gray-100"><ChevronLeft size={20} /></button>
@@ -336,7 +390,7 @@ const CalendarPage = () => {
             const dayPlans = plans[dayStr] || [];
             const note = notes[dayStr];
             const isToday = dayStr === getDayString(new Date());
-            const hasData = mood || dayPlans.length > 0 || note;
+            const hasData = mood || dayPlans.length > 0 || note; // (Logic ของคุณ)
 
             return (
               <div
@@ -357,6 +411,8 @@ const CalendarPage = () => {
           })}
         </div>
       </div>
+      
+      {/* Upcoming Plans Section (โค้ดของคุณ) */}
       <div className="mt-6 bg-white rounded-lg shadow-lg p-4">
         <h3 className="text-lg font-semibold text-gray-700 mb-2">Upcoming Plans</h3>
         {upcomingPlans.length > 0 ? (
@@ -374,12 +430,14 @@ const CalendarPage = () => {
           <p className="text-gray-500">No upcoming plans. Time to relax!</p>
         )}
       </div>
+
+      {/* Modals (โค้ดของคุณ) */}
       {showMoodModal && selectedDay && (
         <MoodModal
           selectedDay={selectedDay}
           onClose={() => setShowMoodModal(false)}
-          onOpenPlan={() => setShowPlanModal(true)}
-          onOpenNote={() => setShowNoteModal(true)}
+          onOpenPlan={() => { setShowMoodModal(false); setShowPlanModal(true); }}
+          onOpenNote={() => { setShowMoodModal(false); setShowNoteModal(true); }}
           currentMood={selectedMood}
           currentPlans={selectedPlans}
           currentNote={selectedNote}
@@ -390,6 +448,7 @@ const CalendarPage = () => {
           selectedDay={selectedDay}
           onClose={() => setShowPlanModal(false)}
           addNotification={addNotification}
+          queueChatbotMessage={queueChatbotMessage} // 💎 7. ส่ง prop เข้าไป
         />
       )}
       {showNoteModal && selectedDay && (
